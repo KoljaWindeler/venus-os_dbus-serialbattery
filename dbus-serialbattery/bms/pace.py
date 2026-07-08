@@ -26,26 +26,26 @@ class Pace(Battery):
     def _build_command(self, cmd_part: bytes) -> bytes:
         # 1. Basis-Header (SOI + Version)
         soi_and_version = b"\x7e" + b"25"
-        
+
         # 2. Adresse  b'\x01' -> b'01')
         if isinstance(self.address, bytes):
             addr_val = self.address[0] if len(self.address) > 0 else 0
         else:
             addr_val = int(self.address)
-        addr_ascii = f"{addr_val:02X}".encode('ascii')
-        
+        addr_ascii = f"{addr_val:02X}".encode("ascii")
+
         # 3. connect
         cmd_without_crc = soi_and_version + addr_ascii + cmd_part
-        
+
         # 4. Checksu
         cal_chk = 0
         for i in range(1, len(cmd_without_crc)):
             cal_chk += cmd_without_crc[i]
-            
+
         cal_chk = 0xFFFF - cal_chk % 65536 + 1
-        crc_ascii = f"{cal_chk:04X}".encode('ascii')
-        
-        logger.debug((cmd_without_crc + crc_ascii + b"\x0d").hex(' '))
+        crc_ascii = f"{cal_chk:04X}".encode("ascii")
+
+        logger.debug((cmd_without_crc + crc_ascii + b"\x0d").hex(" "))
         return cmd_without_crc + crc_ascii + b"\x0d"
 
     @property
@@ -63,7 +63,6 @@ class Pace(Battery):
     @property
     def command_fuses(self):
         return self._build_command(b"4644E00201")
-
 
     def test_connection(self):
         # call a function that will connect to the battery, send a command and retrieve the result.
@@ -470,7 +469,7 @@ class Pace(Battery):
         )
 
         logger.debug("received:")
-        logger.debug(data.hex(' '))
+        logger.debug(data.hex(" "))
 
         if data is False:
             return False
@@ -482,8 +481,8 @@ class Pace(Battery):
             received_addr_int = int(data[3:5], 16)
             current_addr_int = self.address[0] if isinstance(self.address, bytes) else int(self.address)
             if received_addr_int != current_addr_int:
-               logger.error(">>> ERROR: return address incorrect expected "+str(current_addr_int)+" but got "+str(received_addr_int))
-               return False
+                logger.error(">>> ERROR: return address incorrect expected " + str(current_addr_int) + " but got " + str(received_addr_int))
+                return False
 
             payload_length = int(data[10:13], 16)
             if len(data) >= (13 + payload_length + 5):
